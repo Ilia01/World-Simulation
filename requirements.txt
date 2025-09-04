@@ -1,0 +1,15 @@
+# World Simulation - Portfolio Edition
+# Python dependencies for the artificial life simulation engine
+
+# Core dependencies
+rich>=13.0.0
+numpy>=1.21.0
+streamlit>=1.36.0
+pandas>=1.4.0
+plotly>=5.15.0
+
+# Development dependencies (optional)
+# pytest>=7.0.0       # Testing framework
+# black>=22.0.0        # Code formatting
+# flake8>=5.0.0        # Linting
+# mypy>=1.0.0          # Type checking 
