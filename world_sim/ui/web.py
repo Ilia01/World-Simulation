@@ -72,7 +72,7 @@ def _lineage_color(lineage: Optional[int]) -> np.ndarray:
 
 
 def _render_grid_image(
-    world: World, cell_px: int = 16, show_gridlines: bool = True, lineage_colors: bool = False
+    world: World, cell_px: int = 16, show_gridlines: bool = True, lineage_colors: bool = False, show_creatures: bool = True
 ) -> np.ndarray:
     size = world.size
     color_empty = np.array([18, 18, 22], dtype=np.uint8)
@@ -81,11 +81,12 @@ def _render_grid_image(
     img = np.tile(color_empty, (size, size, 1))
     food_mask = world.grid == "F"
     img[food_mask] = color_food
-    for c in world.creatures:
-        if 0 <= c.x < size and 0 <= c.y < size:
-            base_color = _lineage_color(c.lineage) if lineage_colors else default_creature
-            energy_scale = min(1.0, max(0.35, c.energy / 30.0))
-            img[c.x, c.y] = (base_color.astype(np.float32) * energy_scale).astype(np.uint8)
+    if show_creatures:
+        for c in world.creatures:
+            if 0 <= c.x < size and 0 <= c.y < size:
+                base_color = _lineage_color(c.lineage) if lineage_colors else default_creature
+                energy_scale = min(1.0, max(0.35, c.energy / 30.0))
+                img[c.x, c.y] = (base_color.astype(np.float32) * energy_scale).astype(np.uint8)
     img = np.rot90(img, k=1)
     if cell_px > 1:
         img = img.repeat(cell_px, axis=0).repeat(cell_px, axis=1)
@@ -106,61 +107,16 @@ def _history_dataframe(world: World) -> pd.DataFrame:
 
 
 def _make_plotly_figure(world: World, cfg: Dict[str, Any]) -> go.Figure:
-    # Base image layer
+    # Simple grid rendering - creatures as colored squares in cells
     img = _render_grid_image(
         world,
         cell_px=int(cfg.get("cell_px", 18)),
         show_gridlines=bool(cfg.get("show_gridlines", True)),
         lineage_colors=bool(cfg.get("lineage_colors", False)),
+        show_creatures=True,
     )
     fig = px.imshow(img, binary_string=False, origin="upper")
     fig.update_traces(hoverinfo="skip")
-
-    # Overlay creature markers for crisp, elegant look
-    if bool(cfg.get("overlay_points", True)) and world.creatures:
-        xs = []
-        ys = []
-        colors = []
-        sizes = []
-        texts = []
-        for c in world.creatures:
-            # Note rotation used in image; y is horizontal axis after rot90
-            xs.append(c.y)
-            ys.append(world.size - 1 - c.x)
-            sizes.append(max(6, min(14, int(6 + (c.energy / 30.0) * 10))))
-            texts.append(
-                f"ID {world.logger.creature_ids.get(c,'?')} • pos=({c.x},{c.y})\n"
-                f"E={c.energy:.1f} A={c.age} V={c.traits.vision} S={c.traits.speed} M={c.traits.metabolism:.2f}"
-            )
-
-            mode = str(cfg.get("point_color_mode", "Lineage"))
-            if mode == "Energy":
-                # Map energy to green intensity
-                e = max(0.0, min(1.0, c.energy / 30.0))
-                r, g, b = int(56 * e), int(255 * e), int(146 * e)
-                colors.append(f"rgb({r},{g},{b})")
-            elif mode == "Age":
-                t = max(0.0, min(1.0, c.age / 100.0))
-                r = int(255 * t)
-                b = int(255 * (1 - t))
-                colors.append(f"rgb({r},128,{b})")
-            elif mode == "Solid":
-                colors.append("rgb(56,255,146)")
-            else:  # Lineage
-                rgb = _lineage_color(c.lineage)
-                colors.append(f"rgb({int(rgb[0])},{int(rgb[1])},{int(rgb[2])})")
-
-        fig.add_trace(
-            go.Scattergl(
-                x=xs,
-                y=ys,
-                mode="markers",
-                marker=dict(color=colors, size=sizes, line=dict(width=0)),
-                hovertext=texts,
-                hoverinfo="text",
-                name="Creatures",
-            )
-        )
 
     fig.update_layout(
         margin=dict(l=0, r=0, t=0, b=0),
@@ -197,15 +153,6 @@ def _controls_sidebar() -> Dict[str, Any]:
     render_plotly = st.sidebar.toggle(
         "Use Plotly renderer (reduces flicker)", value=bool(cfg.get("render_plotly", True))
     )
-    st.sidebar.markdown("---")
-    st.sidebar.caption("Overlay settings")
-    overlay_points = st.sidebar.toggle("Overlay creature markers", value=bool(cfg.get("overlay_points", True)))
-    point_color_mode = st.sidebar.selectbox(
-        "Marker color by",
-        options=["Lineage", "Energy", "Age", "Solid"],
-        index=["Lineage", "Energy", "Age", "Solid"].index(str(cfg.get("point_color_mode", "Lineage"))),
-    )
-
     st.session_state.config.update(
         {
             "world_size": int(world_size),
@@ -220,8 +167,6 @@ def _controls_sidebar() -> Dict[str, Any]:
             "show_gridlines": bool(show_gridlines),
             "lineage_colors": bool(lineage_colors),
             "render_plotly": bool(render_plotly),
-            "overlay_points": bool(overlay_points),
-            "point_color_mode": str(point_color_mode),
         }
     )
 
