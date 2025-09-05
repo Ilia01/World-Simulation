@@ -244,7 +244,7 @@ def _hero_header() -> None:
     with left:
         st.markdown(
             """
-            ### 🌍 World Simulation – Portfolio Dashboard
+            ### 🌍 World Simulation
             A modern, interactive artificial life simulation featuring evolutionary dynamics and real-time analytics.
             """
         )
