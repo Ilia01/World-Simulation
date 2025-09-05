@@ -191,7 +191,8 @@ class SimulationController:
                     # Find the creature
                     # Fallback to default color if not found
                     creature = next((c for c in self.world.creatures if (c.x, c.y) == (i, j)), None)
-                    base_rgb = self._lineage_rgb(getattr(creature, 'lineage', None)) if creature else self._default_creature
+                    # Use default creature color (bright green) for consistency with legend
+                    base_rgb = self._default_creature
                     energy = getattr(creature, 'energy', 15.0)
                     scale = min(1.0, max(0.35, energy / 30.0))
                     style = rgb_style(base_rgb, scale)
