@@ -34,8 +34,8 @@ streamlit run app.py
 
 ## 📸 Screenshots / Demo
 <p align="center">
-  <img src="docs/assets/web_demo.png" alt="Web dashboard" width="48%" />
-  <img src="docs/assets/terminal_demo.png" alt="Terminal UI" width="48%" />
+  <img src="docs/assets/web_demo.jpg" alt="Web dashboard" width="48%" />
+  <img src="docs/assets/terminal_demo.jpg" alt="Terminal UI" width="48%" />
 </p>
 <p align="center">
   <i>If images are missing, see live UI by running the commands above.</i>
